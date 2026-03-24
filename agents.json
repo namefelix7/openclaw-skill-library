@@ -4,13 +4,12 @@
     {
       "id": "ceo",
       "name": "CEO（贾维斯）",
-      "type": "调度中心",
+      "type": "AI助手",
       "emoji": "🤵",
       "parent": null,
-      "status": "在线",
+      "status": "离线",
       "capabilities": ["任务调度", "汇报整合", "跨系统协调"],
       "uptime": "7×24h",
-      "lastActive": "刚刚",
       "device": "妙搭云电脑",
       "description": "任务分派、汇总汇报、与用户直接交互",
       "note": "已包月 Minimax Token"
@@ -18,13 +17,12 @@
     {
       "id": "laoguanjia",
       "name": "老管家",
-      "type": "子Agent",
+      "type": "AI助手",
       "emoji": "🛡️",
-      "parent": "ceo",
-      "status": "在线",
+      "parent": null,
+      "status": "离线",
       "capabilities": ["定时任务", "常驻监控", "日志记录", "跨系统同步"],
       "uptime": "7×24h",
-      "lastActive": "刚刚",
       "device": "2016款 MacBook（Intel）",
       "description": "定时任务、常驻监控、每日日志自动写、跨系统数据同步",
       "note": "性能弱但稳定，常驻"
@@ -32,14 +30,13 @@
     {
       "id": "dashaoer",
       "name": "大少爷",
-      "type": "子Agent",
+      "type": "AI助手",
       "emoji": "👑",
-      "parent": "ceo",
+      "parent": null,
       "status": "在线",
       "capabilities": ["高算力任务", "AI推理", "代码开发", "复杂分析"],
       "uptime": "按需开机",
-      "lastActive": "刚刚",
-      "device": "2023款 MacBook Pro (M2)",
+      "device": "MacBook Pro (M2)",
       "description": "高算力任务、AI推理、图片生成、代码开发、复杂分析",
       "note": "算力强但易待机断网，需手动开机"
     }
