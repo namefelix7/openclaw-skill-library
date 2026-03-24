@@ -6,101 +6,147 @@
   <title>🦞 Multi-Agent 系统看板</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 32px; }
-    h1 { text-align: center; margin-bottom: 8px; font-size: 28px; color: #f8fafc; }
-    .subtitle { text-align: center; color: #64748b; margin-bottom: 32px; font-size: 14px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-    .card { background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; transition: transform 0.2s, box-shadow 0.2s; }
-    .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .avatar { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-    .ceo .avatar { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .laoguanjia .avatar { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-    .dashaoer .avatar { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
-    .info h2 { font-size: 18px; color: #f8fafc; }
-    .info .type { font-size: 12px; color: #64748b; }
-    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
-    .status-online { background: #052c16; color: #4ade80; border: 1px solid #166534; }
-    .status-offline { background: #2a0a0a; color: #f87171; border: 1px solid #991b1b; }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    .detail { margin-bottom: 10px; }
-    .detail-label { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-    .detail-value { font-size: 14px; color: #cbd5e1; }
-    .relation { margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155; }
-    .relation-label { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .relation-value { font-size: 13px; color: #94a3b8; }
-    .footer { text-align: center; margin-top: 48px; color: #334155; font-size: 12px; }
-    .refresh-btn { display: block; margin: 0 auto 32px; background: #1e40af; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
-    .refresh-btn:hover { background: #1d4ed8; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e1a; color: #e2e8f0; min-height: 100vh; padding: 40px 20px; }
+    .header { text-align: center; margin-bottom: 12px; }
+    .header h1 { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #a78bfa, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .subtitle { color: #64748b; font-size: 14px; margin-top: 6px; }
+    .last-updated { text-align: center; color: #334155; font-size: 12px; margin-bottom: 36px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+    .card { background: #111827; border-radius: 20px; overflow: hidden; border: 1px solid #1f2937; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s; cursor: pointer; position: relative; }
+    .card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 24px 60px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent1), var(--accent2)); opacity: 0; transition: opacity 0.3s; }
+    .card:hover::before { opacity: 1; }
+    .card-ceo  { --accent1: #f59e0b; --accent2: #d97706; }
+    .card-laoguanjia { --accent1: #3b82f6; --accent2: #1d4ed8; }
+    .card-dashaoer  { --accent1: #8b5cf6; --accent2: #6d28d9; }
+    .card-body { padding: 24px; }
+    .card-top { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .avatar { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .card-ceo .avatar { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .card-laoguanjia .avatar { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .card-dashaoer .avatar { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .card-info h2 { font-size: 18px; color: #f8fafc; font-weight: 600; }
+    .card-info .type { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 6px; }
+    .status-online { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-offline { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .divider { height: 1px; background: #1f2937; margin: 14px 0; }
+    .detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+    .detail-label { color: #64748b; min-width: 60px; }
+    .detail-value { color: #94a3b8; flex: 1; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .tag { padding: 3px 10px; border-radius: 6px; font-size: 11px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .card-footer { padding: 12px 24px; background: #0d1117; border-top: 1px solid #1f2937; display: flex; gap: 16px; font-size: 11px; color: #334155; }
+    .card-footer span { display: flex; align-items: center; gap: 4px; }
+    .card-footer .highlight { color: #475569; }
+    .card-footer .uptime { color: #10b981; }
+    .footer-bar { text-align: center; margin-top: 48px; color: #1e293b; font-size: 12px; }
   </style>
 </head>
 <body>
-  <h1>🦞 Multi-Agent 系统看板</h1>
-  <p class="subtitle" id="updateTime">加载中...</p>
-  <button class="refresh-btn" onclick="loadData()">🔄 刷新数据</button>
-  <div class="grid" id="agentGrid">加载中...</div>
-  <p class="footer">🦞 CEO 系统 | 数据来源 agents.json</p>
+  <div class="header">
+    <h1>🦞 Multi-Agent 系统看板</h1>
+    <p class="subtitle">郑梁峰的 AI Agent 团队 · 实时监控</p>
+  </div>
+  <p class="last-updated" id="lastUpdated"></p>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="footer-bar">
+    系统看板 · 随运行状态自动更新
+  </div>
 
   <script>
-    const emojiMap = { 'CEO（贾维斯）': '🦞', '老管家': '🛠️', '大少爷': '🎨' };
-    const classMap = { 'CEO（贾维斯）': 'ceo', '老管家': 'laoguanjia', '大少爷': 'dashaoer' };
-    const parentMap = { 'CEO（贾维斯）': null, '老管家': 'CEO（贾维斯）', '大少爷': 'CEO（贾维斯）' };
-
-    async function loadData() {
-      try {
-        const resp = await fetch('agents.json?_=' + Date.now());
-        const data = await resp.json();
-        render(data.agents, data.lastUpdated);
-      } catch (e) {
-        document.getElementById('agentGrid').innerHTML = '<p style="color:#f87171;text-align:center;grid-column:1/-1">❌ 数据加载失败，请确认 agents.json 已在正确位置</p>';
+    const agents = [
+      {
+        id: "ceo",
+        name: "CEO（贾维斯）",
+        type: "调度中心",
+        emoji: "🤵",
+        status: "在线",
+        capabilities: ["任务调度", "汇报整合", "跨系统协调"],
+        uptime: "7×24h",
+        lastActive: "刚刚",
+        device: "妙搭云电脑",
+        description: "任务分派、汇总汇报、与用户直接交互",
+        note: "已包月 Minimax Token"
+      },
+      {
+        id: "laoguanjia",
+        name: "老管家",
+        type: "子Agent",
+        emoji: "🛡️",
+        status: "在线",
+        capabilities: ["定时任务", "常驻监控", "日志记录", "跨系统同步"],
+        uptime: "7×24h",
+        lastActive: "刚刚",
+        device: "2016款 MacBook（Intel）",
+        description: "定时任务、常驻监控、每日日志自动写、跨系统数据同步",
+        note: "性能弱但稳定，常驻"
+      },
+      {
+        id: "dashaoer",
+        name: "大少爷",
+        type: "子Agent",
+        emoji: "👑",
+        status: "在线",
+        capabilities: ["高算力任务", "AI推理", "代码开发", "复杂分析"],
+        uptime: "按需开机",
+        lastActive: "刚刚",
+        device: "2023款 MacBook Pro (M2)",
+        description: "高算力任务、AI推理、图片生成、代码开发、复杂分析",
+        note: "算力强但易待机断网"
       }
-    }
+    ];
 
-    function render(agents, lastUpdated) {
-      document.getElementById('updateTime').textContent = '最后更新：' + lastUpdated;
-      const grid = document.getElementById('agentGrid');
-      grid.innerHTML = agents.map(a => {
-        const emoji = emojiMap[a.name] || '🤖';
-        const cls = classMap[a.name] || 'ceo';
-        const parent = parentMap[a.name];
-        const parentName = parent || '（无上级）';
-        const statusClass = a.status === '在线' ? 'status-online' : 'status-offline';
-        const parentDisplay = parent ? `上级：${parentName}` : '顶级节点';
-        return `
-          <div class="card ${cls}">
-            <div class="card-header">
-              <div class="avatar">${emoji}</div>
-              <div class="info">
-                <h2>${a.name}</h2>
-                <div class="type">${a.type}</div>
+    const statusMap = { "在线": "online", "离线": "offline", "离开": "away" };
+
+    function renderCard(agent) {
+      const statusClass = agent.status === "在线" ? "status-online" : "status-offline";
+      const tags = agent.capabilities.map(c => `<span class="tag">${c}</span>`).join('');
+      return `
+        <div class="card card-${agent.id}">
+          <div class="card-body">
+            <div class="card-top">
+              <div class="avatar">${agent.emoji}</div>
+              <div class="card-info">
+                <h2>${agent.name}</h2>
+                <div class="type">${agent.type}</div>
+                <div class="status-badge ${statusClass}">
+                  <span class="status-dot"></span>
+                  ${agent.status}
+                </div>
               </div>
             </div>
-            <div class="status-badge ${statusClass}">
-              <span class="status-dot"></span>
-              ${a.status}
+            <div class="divider"></div>
+            <div class="detail-row">
+              <span class="detail-label">设备</span>
+              <span class="detail-value">${agent.device}</span>
             </div>
-            <div class="detail">
-              <div class="detail-label">运行设备</div>
-              <div class="detail-value">${a.device}</div>
+            <div class="detail-row">
+              <span class="detail-label">职责</span>
+              <span class="detail-value">${agent.description}</span>
             </div>
-            <div class="detail">
-              <div class="detail-label">核心职责</div>
-              <div class="detail-value">${a.职责}</div>
+            <div class="detail-row">
+              <span class="detail-label">备注</span>
+              <span class="detail-value">${agent.note}</span>
             </div>
-            <div class="detail">
-              <div class="detail-label">备注</div>
-              <div class="detail-value">${a.备注 || '（无）'}</div>
-            </div>
-            <div class="relation">
-              <div class="relation-label">组织关系</div>
-              <div class="relation-value">${parentDisplay}</div>
-            </div>
+            <div class="tags">${tags}</div>
           </div>
-        `;
-      }).join('');
+          <div class="card-footer">
+            <span>⏱️ 运行：<span class="uptime">${agent.uptime}</span></span>
+            <span>🕐 最近：<span class="highlight">${agent.lastActive}</span></span>
+          </div>
+        </div>
+      `;
     }
 
-    loadData();
+    const grid = document.getElementById('grid');
+    agents.forEach(a => grid.innerHTML += renderCard(a));
+    document.getElementById('lastUpdated').textContent =
+      `最后更新：${new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
   </script>
 </body>
 </html>
