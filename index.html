@@ -27,11 +27,13 @@
     .card-laoguanjia .avatar { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
     .card-dashaoer .avatar { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
     .card-info h2 { font-size: 18px; color: #f8fafc; font-weight: 600; }
-    .card-info .type { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .card-info .type-tag { display: inline-block; font-size: 10px; background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); padding: 2px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+    .card-info .type { font-size: 12px; color: #64748b; margin-top: 4px; }
     .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 6px; }
     .status-online { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
     .status-offline { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-online .status-dot { animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .divider { height: 1px; background: #1f2937; margin: 14px 0; }
     .detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
@@ -39,15 +41,16 @@
     .detail-value { color: #94a3b8; flex: 1; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
     .tag { padding: 3px 10px; border-radius: 6px; font-size: 11px; background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-    .card-footer { padding: 12px 24px; background: #0d1117; border-top: 1px solid #1f2937; display: flex; gap: 16px; font-size: 11px; color: #334155; }
+    .card-footer { padding: 12px 24px; background: #0d1117; border-top: 1px solid #1f2937; display: flex; gap: 16px; font-size: 11px; color: #334155; flex-wrap: wrap; }
     .card-footer span { display: flex; align-items: center; gap: 4px; }
     .card-footer .highlight { color: #475569; }
     .card-footer .uptime { color: #10b981; }
     .card-footer .task { color: #8b5cf6; }
+    .card-footer .unknown { color: #ef4444; }
     .loading { text-align: center; color: #334155; padding: 60px; font-size: 14px; }
-    .error-msg { color: #ef4444; text-align: center; padding: 20px; }
     .footer-bar { text-align: center; margin-top: 48px; color: #1e293b; font-size: 12px; }
     .real-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #3b82f6; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+    .update-error { color: #f59e0b; font-size: 11px; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -62,143 +65,92 @@
   </div>
 
   <div class="footer-bar">
-    系统看板 · 随运行状态自动更新
+    系统看板 · 每30秒自动刷新
   </div>
 
   <script>
-    // 状态文件路径（GitHub Raw）
-    const BASE = 'https://raw.githubusercontent.com/namefelix7/openclaw-skill-library/main';
+    // 使用 GitHub Pages 源（相对路径，同源请求无 CORS 问题）
+    const BASE = '.';
     const STATUS_FILES = {
       ceo: `${BASE}/status/ceo.json`,
       laoguanjia: `${BASE}/status/laoguanjia.json`,
       dashaoer: `${BASE}/status/dashaoer.json`
     };
 
-    // 基础信息（静态）
     const agentsMeta = {
-      ceo: {
-        emoji: "🤵",
-        type: "调度中心",
-        device: "妙搭云电脑",
-        description: "任务分派、汇总汇报、与用户直接交互",
-        note: "已包月 Minimax Token",
-        parent: null,
-        capabilities: ["任务调度", "汇报整合", "跨系统协调"]
-      },
-      laoguanjia: {
-        emoji: "🛡️",
-        type: "子Agent",
-        device: "2016款 MacBook（Intel）",
-        description: "定时任务、常驻监控、每日日志自动写、跨系统数据同步",
-        note: "性能弱但稳定，常驻",
-        parent: "ceo",
-        capabilities: ["定时任务", "常驻监控", "日志记录", "跨系统同步"]
-      },
-      dashaoer: {
-        emoji: "👑",
-        type: "子Agent",
-        device: "MacBook Pro (M2)",
-        description: "高算力任务、AI推理、图片生成、代码开发、复杂分析",
-        note: "算力强但易待机断网，需手动开机",
-        parent: "ceo",
-        capabilities: ["高算力任务", "AI推理", "代码开发", "复杂分析"]
-      }
+      ceo:    { emoji: "🤵", name: "CEO（贾维斯）", type: "独立AI助手", device: "妙搭云电脑",           description: "任务分派、汇总汇报、与用户直接交互", note: "已包月 Minimax Token",        capabilities: ["任务调度", "汇报整合", "跨系统协调"] },
+      laoguanjia: { emoji: "🛡️", name: "老管家",      type: "独立AI助手", device: "2016款 MacBook（Intel）", description: "定时任务、常驻监控、每日日志自动写、跨系统数据同步", note: "性能弱但稳定，常驻",         capabilities: ["定时任务", "常驻监控", "日志记录", "跨系统同步"] },
+      dashaoer:  { emoji: "👑", name: "大少爷",       type: "独立AI助手", device: "MacBook Pro (M2)",       description: "高算力任务、AI推理、图片生成、代码开发、复杂分析",     note: "算力强但易待机断网",     capabilities: ["高算力任务", "AI推理", "代码开发", "复杂分析"] }
     };
 
     function formatTime(isoString) {
-      if (!isoString) return '未知';
-      const d = new Date(isoString);
-      const now = new Date();
-      const diff = Math.floor((now - d) / 1000);
-      if (diff < 60) return '刚刚';
-      if (diff < 3600) return `${Math.floor(diff/60)}分钟前`;
-      if (diff < 86400) return `${Math.floor(diff/3600)}小时前`;
-      return d.toLocaleDateString('zh-CN');
+      if (!isoString) return '<span class="unknown">未知</span>';
+      try {
+        const d = new Date(isoString);
+        const now = new Date();
+        const diff = Math.floor((now - d) / 1000);
+        if (diff < 0) return '<span class="highlight">刚刚</span>';
+        if (diff < 60) return '<span class="highlight">刚刚</span>';
+        if (diff < 3600) return `<span class="highlight">${Math.floor(diff/60)}分钟前</span>`;
+        if (diff < 86400) return `<span class="highlight">${Math.floor(diff/3600)}小时前</span>`;
+        return `<span class="highlight">${Math.toLocaleDateString('zh-CN')(d)}</span>`;
+      } catch { return '<span class="unknown">未知</span>'; }
     }
 
     async function fetchStatus(agentId) {
       try {
-        const resp = await fetch(STATUS_FILES[agentId] + '?t=' + Date.now(), { cache: 'no-cache' });
+        const resp = await fetch(STATUS_FILES[agentId] + '?t=' + Date.now(), { cache: 'no-cache', credentials: 'omit' });
         if (!resp.ok) return null;
         return await resp.json();
-      } catch {
-        return null;
-      }
+      } catch { return null; }
     }
 
     function renderCard(agentId, meta, status) {
-      const statusClass = status && status.status === "在线" ? "status-online" : "status-offline";
+      const online = status && status.status === "在线";
+      const statusClass = online ? "status-online" : "status-offline";
       const displayStatus = status ? status.status : "离线";
-      const lastActive = status ? formatTime(status.lastActive) : "未知";
-      const uptime = status && status.uptime ? status.uptime : meta.type === "调度中心" ? "7×24h" : "未知";
+      const lastActive = status ? formatTime(status.lastActive) : '<span class="unknown">未知</span>';
+      const uptime = status && status.uptime ? status.uptime : (agentId === 'ceo' ? '7×24h' : '未知');
       const currentTask = status && status.currentTask ? status.currentTask : null;
       const tags = meta.capabilities.map(c => `<span class="tag">${c}</span>`).join('');
+      let taskHtml = currentTask ? `<div class="detail-row" style="margin-top:8px"><span class="detail-label" style="color:#8b5cf6">任务</span><span class="detail-value task">${currentTask}</span></div>` : '';
 
-      let taskHtml = '';
-      if (currentTask) {
-        taskHtml = `<div class="detail-row" style="margin-top:8px">
-          <span class="detail-label" style="color:#8b5cf6">任务</span>
-          <span class="detail-value task">${currentTask}</span>
-        </div>`;
-      }
-
-      return `
-        <div class="card card-${agentId}">
-          <div class="card-body">
-            <div class="card-top">
-              <div class="avatar">${meta.emoji}</div>
-              <div class="card-info">
-                <h2>${meta.emoji} ${agentId === 'ceo' ? 'CEO（贾维斯）' : agentId === 'laoguanjia' ? '老管家' : '大少爷'}</h2>
-                <div class="type">${meta.type}</div>
-                <div class="status-badge ${statusClass}">
-                  <span class="status-dot"></span>
-                  ${displayStatus}
-                </div>
-              </div>
+      return `<div class="card card-${agentId}">
+        <div class="card-body">
+          <div class="card-top">
+            <div class="avatar">${meta.emoji}</div>
+            <div class="card-info">
+              <h2>${meta.emoji} ${meta.name}<span class="type-tag">${meta.type}</span></h2>
+              <div class="status-badge ${statusClass}"><span class="status-dot"></span>${displayStatus}</div>
             </div>
-            <div class="divider"></div>
-            <div class="detail-row">
-              <span class="detail-label">设备</span>
-              <span class="detail-value">${meta.device}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">职责</span>
-              <span class="detail-value">${meta.description}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">备注</span>
-              <span class="detail-value">${meta.note}</span>
-            </div>
-            ${taskHtml}
-            <div class="tags">${tags}</div>
           </div>
-          <div class="card-footer">
-            <span>⏱️ 运行：<span class="uptime">${uptime}</span></span>
-            <span>🕐 最近：<span class="highlight">${lastActive}</span></span>
-          </div>
-        </div> `;
+          <div class="divider"></div>
+          <div class="detail-row"><span class="detail-label">设备</span><span class="detail-value">${meta.device}</span></div>
+          <div class="detail-row"><span class="detail-label">职责</span><span class="detail-value">${meta.description}</span></div>
+          <div class="detail-row"><span class="detail-label">备注</span><span class="detail-value">${meta.note}</span></div>
+          ${taskHtml}
+          <div class="tags">${tags}</div>
+        </div>
+        <div class="card-footer">
+          <span>⏱️ 运行：<span class="uptime">${uptime}</span></span>
+          <span>🕐 最近活跃：${lastActive}</span>
+        </div>
+      </div>`;
     }
 
     async function loadAll() {
       const [ceo, laoguanjia, dashaoer] = await Promise.all([
-        fetchStatus('ceo'),
-        fetchStatus('laoguanjia'),
-        fetchStatus('dashaoer')
+        fetchStatus('ceo'), fetchStatus('laoguanjia'), fetchStatus('dashaoer')
       ]);
-
       const grid = document.getElementById('grid');
       grid.innerHTML =
         renderCard('ceo', agentsMeta.ceo, ceo) +
         renderCard('laoguanjia', agentsMeta.laoguanjia, laoguanjia) +
         renderCard('dashaoer', agentsMeta.dashaoer, dashaoer);
-
-      const now = new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      document.getElementById('lastUpdated').innerHTML = `最后更新：<span>${now}</span>`;
+      document.getElementById('lastUpdated').innerHTML = `最后更新：<span>${new Date().toLocaleString('zh-CN')}</span>`;
     }
 
     loadAll();
-
-    // 每30秒自动刷新
     setInterval(loadAll, 30000);
   </script>
 </body>
