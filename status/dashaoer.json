@@ -1,9 +1,9 @@
 {
   "id": "dashaoer",
   "status": "在线",
-  "lastActive": "2026-03-24T11:00:46+08:00",
+  "lastActive": "2026-03-24T11:16:43+08:00",
   "uptime": "按需开机",
-  "currentTask": "大少爷主控中，任务执行与协调",
+  "currentTask": "大少爷主控中，仪表盘搭建与状态上报",
   "capabilities": ["高算力任务", "AI推理", "代码开发", "复杂分析"],
   "device": "MacBook Pro (M2)",
   "note": "算力强但易待机断网，需手动开机"
