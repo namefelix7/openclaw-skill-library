@@ -1,11 +1,11 @@
 {
   "id": "laoguanjia",
-  "status": "离线",
-  "lastActive": "2026-03-24T12:33:02+08:00",
+  "status": "在线",
+  "lastActive": "2026-03-24T12:38:37+08:00",
   "uptime": "7×24h",
   "heartbeatInterval": "每1小时",
-  "currentTask": "—",
+  "currentTask": "老管家值守中，定时任务执行",
   "capabilities": ["定时任务", "常驻监控", "日志记录", "跨系统同步"],
   "device": "2016款 MacBook（Intel）",
-  "note": "已离线"
+  "note": "性能弱但稳定，常驻"
 }
