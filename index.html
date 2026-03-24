@@ -11,6 +11,7 @@
     .header h1 { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #a78bfa, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .subtitle { color: #64748b; font-size: 14px; margin-top: 6px; }
     .last-updated { text-align: center; color: #334155; font-size: 12px; margin-bottom: 36px; }
+    .last-updated span { color: #3b82f6; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
     .card { background: #111827; border-radius: 20px; overflow: hidden; border: 1px solid #1f2937; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s; cursor: pointer; position: relative; }
     .card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 24px 60px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2); }
@@ -42,111 +43,163 @@
     .card-footer span { display: flex; align-items: center; gap: 4px; }
     .card-footer .highlight { color: #475569; }
     .card-footer .uptime { color: #10b981; }
+    .card-footer .task { color: #8b5cf6; }
+    .loading { text-align: center; color: #334155; padding: 60px; font-size: 14px; }
+    .error-msg { color: #ef4444; text-align: center; padding: 20px; }
     .footer-bar { text-align: center; margin-top: 48px; color: #1e293b; font-size: 12px; }
+    .real-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #3b82f6; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>🦞 Multi-Agent 系统看板</h1>
-    <p class="subtitle">郑梁峰的 AI Agent 团队 · 实时监控</p>
+    <p class="subtitle">郑梁峰的 AI Agent 团队 · <span class="real-badge">● 实时</span></p>
   </div>
-  <p class="last-updated" id="lastUpdated"></p>
+  <p class="last-updated" id="lastUpdated">加载中...</p>
 
-  <div class="grid" id="grid"></div>
+  <div class="grid" id="grid">
+    <div class="loading">正在连接状态服务器...</div>
+  </div>
 
   <div class="footer-bar">
     系统看板 · 随运行状态自动更新
   </div>
 
   <script>
-    const agents = [
-      {
-        id: "ceo",
-        name: "CEO（贾维斯）",
-        type: "调度中心",
+    // 状态文件路径（GitHub Raw）
+    const BASE = 'https://raw.githubusercontent.com/namefelix7/openclaw-skill-library/main';
+    const STATUS_FILES = {
+      ceo: `${BASE}/status/ceo.json`,
+      laoguanjia: `${BASE}/status/laoguanjia.json`,
+      dashaoer: `${BASE}/status/dashaoer.json`
+    };
+
+    // 基础信息（静态）
+    const agentsMeta = {
+      ceo: {
         emoji: "🤵",
-        status: "在线",
-        capabilities: ["任务调度", "汇报整合", "跨系统协调"],
-        uptime: "7×24h",
-        lastActive: "刚刚",
+        type: "调度中心",
         device: "妙搭云电脑",
         description: "任务分派、汇总汇报、与用户直接交互",
-        note: "已包月 Minimax Token"
+        note: "已包月 Minimax Token",
+        parent: null,
+        capabilities: ["任务调度", "汇报整合", "跨系统协调"]
       },
-      {
-        id: "laoguanjia",
-        name: "老管家",
-        type: "子Agent",
+      laoguanjia: {
         emoji: "🛡️",
-        status: "在线",
-        capabilities: ["定时任务", "常驻监控", "日志记录", "跨系统同步"],
-        uptime: "7×24h",
-        lastActive: "刚刚",
+        type: "子Agent",
         device: "2016款 MacBook（Intel）",
         description: "定时任务、常驻监控、每日日志自动写、跨系统数据同步",
-        note: "性能弱但稳定，常驻"
+        note: "性能弱但稳定，常驻",
+        parent: "ceo",
+        capabilities: ["定时任务", "常驻监控", "日志记录", "跨系统同步"]
       },
-      {
-        id: "dashaoer",
-        name: "大少爷",
-        type: "子Agent",
+      dashaoer: {
         emoji: "👑",
-        status: "在线",
-        capabilities: ["高算力任务", "AI推理", "代码开发", "复杂分析"],
-        uptime: "按需开机",
-        lastActive: "刚刚",
-        device: "2023款 MacBook Pro (M2)",
+        type: "子Agent",
+        device: "MacBook Pro (M2)",
         description: "高算力任务、AI推理、图片生成、代码开发、复杂分析",
-        note: "算力强但易待机断网"
+        note: "算力强但易待机断网，需手动开机",
+        parent: "ceo",
+        capabilities: ["高算力任务", "AI推理", "代码开发", "复杂分析"]
       }
-    ];
+    };
 
-    const statusMap = { "在线": "online", "离线": "offline", "离开": "away" };
+    function formatTime(isoString) {
+      if (!isoString) return '未知';
+      const d = new Date(isoString);
+      const now = new Date();
+      const diff = Math.floor((now - d) / 1000);
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return `${Math.floor(diff/60)}分钟前`;
+      if (diff < 86400) return `${Math.floor(diff/3600)}小时前`;
+      return d.toLocaleDateString('zh-CN');
+    }
 
-    function renderCard(agent) {
-      const statusClass = agent.status === "在线" ? "status-online" : "status-offline";
-      const tags = agent.capabilities.map(c => `<span class="tag">${c}</span>`).join('');
+    async function fetchStatus(agentId) {
+      try {
+        const resp = await fetch(STATUS_FILES[agentId] + '?t=' + Date.now(), { cache: 'no-cache' });
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch {
+        return null;
+      }
+    }
+
+    function renderCard(agentId, meta, status) {
+      const statusClass = status && status.status === "在线" ? "status-online" : "status-offline";
+      const displayStatus = status ? status.status : "离线";
+      const lastActive = status ? formatTime(status.lastActive) : "未知";
+      const uptime = status && status.uptime ? status.uptime : meta.type === "调度中心" ? "7×24h" : "未知";
+      const currentTask = status && status.currentTask ? status.currentTask : null;
+      const tags = meta.capabilities.map(c => `<span class="tag">${c}</span>`).join('');
+
+      let taskHtml = '';
+      if (currentTask) {
+        taskHtml = `<div class="detail-row" style="margin-top:8px">
+          <span class="detail-label" style="color:#8b5cf6">任务</span>
+          <span class="detail-value task">${currentTask}</span>
+        </div>`;
+      }
+
       return `
-        <div class="card card-${agent.id}">
+        <div class="card card-${agentId}">
           <div class="card-body">
             <div class="card-top">
-              <div class="avatar">${agent.emoji}</div>
+              <div class="avatar">${meta.emoji}</div>
               <div class="card-info">
-                <h2>${agent.name}</h2>
-                <div class="type">${agent.type}</div>
+                <h2>${meta.emoji} ${agentId === 'ceo' ? 'CEO（贾维斯）' : agentId === 'laoguanjia' ? '老管家' : '大少爷'}</h2>
+                <div class="type">${meta.type}</div>
                 <div class="status-badge ${statusClass}">
                   <span class="status-dot"></span>
-                  ${agent.status}
+                  ${displayStatus}
                 </div>
               </div>
             </div>
             <div class="divider"></div>
             <div class="detail-row">
               <span class="detail-label">设备</span>
-              <span class="detail-value">${agent.device}</span>
+              <span class="detail-value">${meta.device}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">职责</span>
-              <span class="detail-value">${agent.description}</span>
+              <span class="detail-value">${meta.description}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">备注</span>
-              <span class="detail-value">${agent.note}</span>
+              <span class="detail-value">${meta.note}</span>
             </div>
+            ${taskHtml}
             <div class="tags">${tags}</div>
           </div>
           <div class="card-footer">
-            <span>⏱️ 运行：<span class="uptime">${agent.uptime}</span></span>
-            <span>🕐 最近：<span class="highlight">${agent.lastActive}</span></span>
+            <span>⏱️ 运行：<span class="uptime">${uptime}</span></span>
+            <span>🕐 最近：<span class="highlight">${lastActive}</span></span>
           </div>
-        </div>
-      `;
+        </div> `;
     }
 
-    const grid = document.getElementById('grid');
-    agents.forEach(a => grid.innerHTML += renderCard(a));
-    document.getElementById('lastUpdated').textContent =
-      `最后更新：${new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    async function loadAll() {
+      const [ceo, laoguanjia, dashaoer] = await Promise.all([
+        fetchStatus('ceo'),
+        fetchStatus('laoguanjia'),
+        fetchStatus('dashaoer')
+      ]);
+
+      const grid = document.getElementById('grid');
+      grid.innerHTML =
+        renderCard('ceo', agentsMeta.ceo, ceo) +
+        renderCard('laoguanjia', agentsMeta.laoguanjia, laoguanjia) +
+        renderCard('dashaoer', agentsMeta.dashaoer, dashaoer);
+
+      const now = new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('lastUpdated').innerHTML = `最后更新：<span>${now}</span>`;
+    }
+
+    loadAll();
+
+    // 每30秒自动刷新
+    setInterval(loadAll, 30000);
   </script>
 </body>
 </html>
